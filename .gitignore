@@ -12,6 +12,7 @@ dist
 dist-ssr
 *.local
 *.tsbuildinfo
+package-lock.json
 
 # Env
 .env
