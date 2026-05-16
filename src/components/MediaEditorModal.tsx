@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { AlertTriangle, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
+import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
 import type { MediaListEntry, MediaListStatus } from '@/lib/anilist/types'
 import { ALL_STATUSES, fuzzyDateRange, seasonLabel, statusLabel } from '@/lib/media'
 import {
@@ -309,15 +309,33 @@ function EditorBody({ entry, isNew, form, setForm }: EditorBodyProps) {
                 <span className="text-muted-foreground font-normal"> / {progressMax}</span>
               )}
             </Label>
-            <Input
-              type="number"
-              inputMode="numeric"
-              min={0}
-              max={progressMax ?? undefined}
-              value={form.progress}
-              onChange={(e) => setForm({ ...form, progress: e.target.value })}
-              placeholder="0"
-            />
+            <div className="flex gap-1.5">
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={0}
+                max={progressMax ?? undefined}
+                value={form.progress}
+                onChange={(e) => setForm({ ...form, progress: e.target.value })}
+                placeholder="0"
+                className="flex-1 min-w-0"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  const current = parseInt(form.progress, 10) || 0
+                  const next = progressMax != null ? Math.min(current + 1, progressMax) : current + 1
+                  setForm({ ...form, progress: String(next) })
+                }}
+                disabled={progressMax != null && (parseInt(form.progress, 10) || 0) >= progressMax}
+                aria-label="Bump by 1"
+                className="shrink-0"
+              >
+                <Plus className="size-4" />
+              </Button>
+            </div>
           </div>
 
           {showVolumes && (

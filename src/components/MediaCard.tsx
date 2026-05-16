@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import type { MediaListEntry, MediaType } from '@/lib/anilist/types'
-import { fuzzyDateRange, seasonLabel } from '@/lib/media'
+import { dateToFuzzy, fuzzyDateRange, seasonLabel } from '@/lib/media'
 import { StatusBadge } from '@/components/StatusBadge'
 import { QuickStatusButtons } from '@/components/QuickStatusButtons'
+import { useUpdateEntry } from '@/hooks/useUpdateEntry'
 import { cn } from '@/lib/utils'
 
 interface MediaCardProps {
@@ -13,6 +15,7 @@ interface MediaCardProps {
 
 export function MediaCard({ entry, type, onOpen }: MediaCardProps) {
   const [loaded, setLoaded] = useState(false)
+  const update = useUpdateEntry()
   const { media } = entry
   const isManga = type === 'MANGA'
   const title = media.title.userPreferred || media.title.romaji || media.title.english || ''
@@ -30,6 +33,8 @@ export function MediaCard({ entry, type, onOpen }: MediaCardProps) {
 
   const progressMax = isManga ? media.chapters : media.episodes
   const progress = entry.progress > 0 ? entry.progress : null
+  const canIncrement =
+    entry.status === 'CURRENT' && (progressMax == null || entry.progress < progressMax)
 
   const handleOpen = () => onOpen(entry)
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -37,6 +42,19 @@ export function MediaCard({ entry, type, onOpen }: MediaCardProps) {
       e.preventDefault()
       onOpen(entry)
     }
+  }
+
+  const handleIncrement = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (update.isPending) return
+    const nextProgress = entry.progress + 1
+    const reachedMax = progressMax != null && nextProgress >= progressMax
+    const patch: Parameters<typeof update.mutate>[0] = { entry, progress: nextProgress }
+    if (reachedMax) {
+      patch.status = 'COMPLETED'
+      if (!entry.completedAt?.year) patch.completedAt = dateToFuzzy(new Date())
+    }
+    update.mutate(patch)
   }
 
   return (
@@ -113,7 +131,21 @@ export function MediaCard({ entry, type, onOpen }: MediaCardProps) {
           </div>
           {dateRange && <p className="mt-1 text-[11px] text-white/60">{dateRange}</p>}
         </div>
-        <QuickStatusButtons entry={entry} type={type} className="shrink-0" />
+        <div className="shrink-0 space-y-1.5">
+          {canIncrement && (
+            <button
+              type="button"
+              onClick={handleIncrement}
+              disabled={update.isPending}
+              aria-label={isManga ? 'Bump chapter by 1' : 'Bump episode by 1'}
+              className="inline-flex h-7 w-full items-center justify-center gap-1 rounded-md bg-white/15 px-2 text-[11px] font-medium text-white transition-colors hover:bg-white/30 disabled:opacity-50"
+            >
+              <Plus className="size-3" />
+              {isManga ? '1 chapter' : '1 episode'}
+            </button>
+          )}
+          <QuickStatusButtons entry={entry} type={type} />
+        </div>
       </div>
     </div>
   )
