@@ -19,7 +19,7 @@ interface HeaderProps {
 
 export function Header({ type, onTypeChange }: HeaderProps) {
   const queryClient = useQueryClient()
-  const { logout } = useAuth()
+  const { isAuthenticated, logout } = useAuth()
   const { data: viewer } = useViewer()
   const location = useLocation()
   const isBrowse = location.pathname.includes('/browse')
@@ -32,12 +32,16 @@ export function Header({ type, onTypeChange }: HeaderProps) {
     setRefreshing(false)
   }
 
+  const homeTo = isAuthenticated
+    ? `/${mediaTypeSlug(type)}/list/all`
+    : `/${mediaTypeSlug(type)}/browse`
+
   return (
     <header className="sticky top-0 z-30 border-b border-border/60 bg-background/85 backdrop-blur">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <Link
-            to={`/${mediaTypeSlug(type)}/list/all`}
+            to={homeTo}
             className="flex items-center gap-2.5 shrink-0"
             aria-label="Kirokukan home"
           >
@@ -52,39 +56,49 @@ export function Header({ type, onTypeChange }: HeaderProps) {
             <span className="text-lg font-semibold tracking-tight">Kirokukan</span>
           </Link>
           <MediaTypeToggle value={type} onChange={onTypeChange} />
-          <Link
-            to={`/${mediaTypeSlug(type)}/browse`}
-            className={cn(
-              'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full transition-colors',
-              isBrowse
-                ? 'bg-foreground text-background'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            <Compass className="size-4" />
-            Browse
-          </Link>
+          {isAuthenticated && (
+            <Link
+              to={`/${mediaTypeSlug(type)}/browse`}
+              className={cn(
+                'inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-full transition-colors',
+                isBrowse
+                  ? 'bg-foreground text-background'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <Compass className="size-4" />
+              Browse
+            </Link>
+          )}
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleRefresh}
-            aria-label="Refresh"
-            disabled={refreshing}
-          >
-            <RefreshCw className={cn('size-5', refreshing && 'animate-spin')} />
-          </Button>
-          {viewer?.avatar?.medium && (
-            <img
-              src={viewer.avatar.medium}
-              alt={viewer.name}
-              className="size-8 rounded-full object-cover"
-            />
+          {isAuthenticated ? (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleRefresh}
+                aria-label="Refresh"
+                disabled={refreshing}
+              >
+                <RefreshCw className={cn('size-5', refreshing && 'animate-spin')} />
+              </Button>
+              {viewer?.avatar?.medium && (
+                <img
+                  src={viewer.avatar.medium}
+                  alt={viewer.name}
+                  className="size-8 rounded-full object-cover"
+                />
+              )}
+              <Button variant="ghost" size="icon" onClick={logout} aria-label="Sign out">
+                <LogOut className="size-5" />
+              </Button>
+            </>
+          ) : (
+            <Button asChild size="sm">
+              <Link to="/login">Sign in</Link>
+            </Button>
           )}
-          <Button variant="ghost" size="icon" onClick={logout} aria-label="Sign out">
-            <LogOut className="size-5" />
-          </Button>
         </div>
       </div>
     </header>

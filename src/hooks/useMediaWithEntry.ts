@@ -42,7 +42,7 @@ export function useMediaWithEntry(mediaId: number | null, type: MediaType) {
   const userId = viewer?.id
 
   return useQuery({
-    queryKey: [...MEDIA_WITH_ENTRY_KEY, mediaId],
+    queryKey: [...MEDIA_WITH_ENTRY_KEY, mediaId, userId ?? null],
     enabled: mediaId != null,
     staleTime: 1000 * 60 * 5,
     queryFn: async (): Promise<MediaWithEntry> => {

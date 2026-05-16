@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { Search } from 'lucide-react'
 import type { MediaListEntry } from '@/lib/anilist/types'
-import { ALL_STATUSES, ALL_TABS, type ListTab } from '@/lib/media'
+import { ALL_STATUSES, ALL_TABS, mediaTypeSlug, type ListTab } from '@/lib/media'
 import { sortEntries } from '@/lib/sort'
 import { groupEntriesByCompletedDate } from '@/lib/dateGroup'
 import { useAuth } from '@/hooks/useAuth'
@@ -88,7 +88,7 @@ export function ListPage() {
   const openEntry = useCallback((entry: MediaListEntry) => setEditingId(entry.id), [])
   const closeEntry = useCallback(() => setEditingId(null), [])
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />
+  if (!isAuthenticated) return <Navigate to={`/${mediaTypeSlug(type)}/browse`} replace />
 
   return (
     <div className="min-h-screen flex flex-col">

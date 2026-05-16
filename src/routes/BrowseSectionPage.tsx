@@ -3,7 +3,6 @@ import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import type { BrowseMedia, MediaType } from '@/lib/anilist/types'
 import { mediaTypeFromSlug, mediaTypeSlug } from '@/lib/media'
 import { getSectionConfig } from '@/lib/browseSections'
-import { useAuth } from '@/hooks/useAuth'
 import { useInfiniteBrowseSection } from '@/hooks/useInfiniteBrowseSection'
 import { Header } from '@/components/Header'
 import { BrowseSearch } from '@/components/BrowseSearch'
@@ -11,7 +10,6 @@ import { InfiniteGrid } from '@/components/InfiniteGrid'
 import { BrowseEditorModal } from '@/components/BrowseEditorModal'
 
 export function BrowseSectionPage() {
-  const { isAuthenticated } = useAuth()
   const params = useParams<{ type?: string; section?: string }>()
   const navigate = useNavigate()
   const type: MediaType = mediaTypeFromSlug(params.type) ?? 'ANIME'
@@ -32,7 +30,6 @@ export function BrowseSectionPage() {
     setOpenMediaId(media.id)
   }, [])
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />
   if (!config) return <Navigate to={`/${mediaTypeSlug(type)}/browse`} replace />
 
   return (

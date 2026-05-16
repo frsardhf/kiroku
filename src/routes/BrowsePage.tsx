@@ -1,8 +1,7 @@
 import { useCallback, useState } from 'react'
-import { Navigate, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import type { BrowseMedia, MediaType } from '@/lib/anilist/types'
 import { mediaTypeFromSlug, mediaTypeSlug } from '@/lib/media'
-import { useAuth } from '@/hooks/useAuth'
 import { useBrowseData } from '@/hooks/useBrowseData'
 import { Header } from '@/components/Header'
 import { BrowseSearch } from '@/components/BrowseSearch'
@@ -16,7 +15,6 @@ interface EditorCtx {
 }
 
 export function BrowsePage() {
-  const { isAuthenticated } = useAuth()
   const params = useParams<{ type?: string }>()
   const navigate = useNavigate()
   const type: MediaType = mediaTypeFromSlug(params.type) ?? 'ANIME'
@@ -39,8 +37,6 @@ export function BrowsePage() {
   const handleOpen = useCallback((media: BrowseMedia) => {
     setEditor({ mediaId: media.id, list: [media] })
   }, [])
-
-  if (!isAuthenticated) return <Navigate to="/login" replace />
 
   return (
     <div className="min-h-screen flex flex-col">

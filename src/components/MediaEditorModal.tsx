@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { AlertTriangle, ChevronLeft, ChevronRight, Loader2, Plus } from 'lucide-react'
 import type { MediaListEntry, MediaListStatus } from '@/lib/anilist/types'
 import { ALL_STATUSES, fuzzyDateRange, seasonLabel, statusLabel } from '@/lib/media'
@@ -24,6 +25,7 @@ import {
 import { DateField } from '@/components/DateField'
 import { Synopsis } from '@/components/Synopsis'
 import { StatusBadge } from '@/components/StatusBadge'
+import { useAuth } from '@/hooks/useAuth'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { useUpdateEntry } from '@/hooks/useUpdateEntry'
 import { cn } from '@/lib/utils'
@@ -55,6 +57,7 @@ export function MediaEditorModal({
   onClose,
 }: MediaEditorModalProps) {
   const isMobile = useIsMobile()
+  const { isAuthenticated } = useAuth()
   const update = useUpdateEntry()
   const [form, setForm] = useState<FormState | null>(null)
   const formRef = useRef<FormState | null>(null)
@@ -88,14 +91,21 @@ export function MediaEditorModal({
       const curEntry = entryRef.current
       const curForm = formRef.current
       // Save in-flight edits, but only for existing entries — auto-creating
-      // a new entry just from arrow-key nav would be surprising.
-      if (curEntry && curEntry.id && curForm && isFormDirty(curForm, curEntry)) {
+      // a new entry just from arrow-key nav would be surprising. Anon users
+      // can't save at all.
+      if (
+        isAuthenticated &&
+        curEntry &&
+        curEntry.id &&
+        curForm &&
+        isFormDirty(curForm, curEntry)
+      ) {
         update.mutate(buildPatch(curEntry, curForm))
       }
       if (dir === -1 && nav.canPrev) nav.onPrev()
       if (dir === 1 && nav.canNext) nav.onNext()
     },
-    [nav, update],
+    [isAuthenticated, nav, update],
   )
 
   useEffect(() => {
@@ -125,7 +135,13 @@ export function MediaEditorModal({
     !entry || !form ? (
       <LoadingBody />
     ) : (
-      <EditorBody entry={entry} isNew={isNew} form={form} setForm={setForm} />
+      <EditorBody
+        entry={entry}
+        isNew={isNew}
+        form={form}
+        setForm={setForm}
+        disabled={!isAuthenticated}
+      />
     )
 
   const saveLabel = isNew ? 'Add to list' : 'Save'
@@ -133,12 +149,18 @@ export function MediaEditorModal({
     <div className="flex items-center justify-between gap-2">
       {nav ? <NavHeader nav={nav} onNavigate={handleNavigate} /> : <span />}
       <div className="flex items-center gap-2">
-        <Button variant="ghost" onClick={onClose} disabled={update.isPending}>
-          Cancel
+        <Button variant="ghost" onClick={onClose}>
+          Close
         </Button>
-        <Button onClick={handleSave} disabled={update.isPending || !form || isLoading}>
-          {update.isPending ? 'Saving…' : saveLabel}
-        </Button>
+        {isAuthenticated ? (
+          <Button onClick={handleSave} disabled={update.isPending || !form || isLoading}>
+            {update.isPending ? 'Saving…' : saveLabel}
+          </Button>
+        ) : (
+          <Button asChild>
+            <Link to="/login">Sign in to track</Link>
+          </Button>
+        )}
       </div>
     </div>
   )
@@ -209,9 +231,10 @@ interface EditorBodyProps {
   isNew: boolean
   form: FormState
   setForm: (f: FormState) => void
+  disabled?: boolean
 }
 
-function EditorBody({ entry, isNew, form, setForm }: EditorBodyProps) {
+function EditorBody({ entry, isNew, form, setForm, disabled = false }: EditorBodyProps) {
   const media = entry.media
   const type = media.type
   const isManga = type === 'MANGA'
@@ -288,7 +311,11 @@ function EditorBody({ entry, isNew, form, setForm }: EditorBodyProps) {
         <div className={cn('grid gap-3', showVolumes ? 'grid-cols-5' : 'grid-cols-4')}>
           <div className="space-y-1.5">
             <Label>Status</Label>
-            <Select value={form.status} onValueChange={(v) => onStatusChange(v as MediaListStatus)}>
+            <Select
+              value={form.status}
+              onValueChange={(v) => onStatusChange(v as MediaListStatus)}
+              disabled={disabled}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -318,6 +345,7 @@ function EditorBody({ entry, isNew, form, setForm }: EditorBodyProps) {
                 value={form.progress}
                 onChange={(e) => setForm({ ...form, progress: e.target.value })}
                 placeholder="0"
+                disabled={disabled}
                 className="flex-1 min-w-0"
               />
               <Button
@@ -329,7 +357,10 @@ function EditorBody({ entry, isNew, form, setForm }: EditorBodyProps) {
                   const next = progressMax != null ? Math.min(current + 1, progressMax) : current + 1
                   setForm({ ...form, progress: String(next) })
                 }}
-                disabled={progressMax != null && (parseInt(form.progress, 10) || 0) >= progressMax}
+                disabled={
+                  disabled ||
+                  (progressMax != null && (parseInt(form.progress, 10) || 0) >= progressMax)
+                }
                 aria-label="Bump by 1"
                 className="shrink-0"
               >
@@ -354,21 +385,30 @@ function EditorBody({ entry, isNew, form, setForm }: EditorBodyProps) {
                 value={form.progressVolumes}
                 onChange={(e) => setForm({ ...form, progressVolumes: e.target.value })}
                 placeholder="0"
+                disabled={disabled}
               />
             </div>
           )}
 
           <div className="space-y-1.5">
             <Label>Started</Label>
-            <DateField value={form.startedAt} onChange={(d) => setForm({ ...form, startedAt: d })} />
+            <DateField
+              value={form.startedAt}
+              onChange={(d) => setForm({ ...form, startedAt: d })}
+              disabled={disabled}
+            />
           </div>
           <div className="space-y-1.5">
             <Label>Finished</Label>
-            <DateField value={form.completedAt} onChange={(d) => setForm({ ...form, completedAt: d })} />
+            <DateField
+              value={form.completedAt}
+              onChange={(d) => setForm({ ...form, completedAt: d })}
+              disabled={disabled}
+            />
           </div>
         </div>
 
-        {warnings.length > 0 && (
+        {warnings.length > 0 && !disabled && (
           <div className="space-y-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2">
             {warnings.map((w, i) => (
               <div key={i} className="flex items-start gap-2 text-xs text-amber-300">

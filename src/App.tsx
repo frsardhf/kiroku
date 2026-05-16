@@ -15,6 +15,7 @@ import { BrowsePage } from '@/routes/BrowsePage'
 import { BrowseSectionPage } from '@/routes/BrowseSectionPage'
 import { BrowseFilterPage } from '@/routes/BrowseFilterPage'
 import { usePrefetchMediaLists } from '@/hooks/usePrefetchMediaLists'
+import { useAuth } from '@/hooks/useAuth'
 
 const SEVEN_DAYS = 1000 * 60 * 60 * 24 * 7
 
@@ -76,6 +77,11 @@ export default function App() {
   )
 }
 
+function DefaultRedirect() {
+  const { isAuthenticated } = useAuth()
+  return <Navigate to={isAuthenticated ? '/anime/list/all' : '/anime/browse'} replace />
+}
+
 function AppRoutes() {
   usePrefetchMediaLists()
   return (
@@ -86,9 +92,9 @@ function AppRoutes() {
       <Route path="/:type/browse" element={<BrowsePage />} />
       <Route path="/:type/browse/search" element={<BrowseFilterPage />} />
       <Route path="/:type/browse/:section" element={<BrowseSectionPage />} />
-      <Route path="/" element={<Navigate to="/anime/list/all" replace />} />
-      <Route path="/list/:status" element={<Navigate to="/anime/list/all" replace />} />
-      <Route path="*" element={<Navigate to="/anime/list/all" replace />} />
+      <Route path="/" element={<DefaultRedirect />} />
+      <Route path="/list/:status" element={<DefaultRedirect />} />
+      <Route path="*" element={<DefaultRedirect />} />
     </Routes>
   )
 }

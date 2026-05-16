@@ -1,7 +1,5 @@
 import { useCallback, useState } from 'react'
-import { Navigate } from 'react-router-dom'
 import type { BrowseMedia } from '@/lib/anilist/types'
-import { useAuth } from '@/hooks/useAuth'
 import { useBrowseParams } from '@/hooks/useBrowseParams'
 import { useInfiniteBrowseFilter } from '@/hooks/useInfiniteBrowseFilter'
 import { Header } from '@/components/Header'
@@ -12,7 +10,6 @@ import { PresetChipStrip } from '@/components/PresetChipStrip'
 import { BrowseEditorModal } from '@/components/BrowseEditorModal'
 
 export function BrowseFilterPage() {
-  const { isAuthenticated } = useAuth()
   const { type, filters, setFilters, replaceAll, setType, clearAll, activeCount, isEmpty } = useBrowseParams()
   const [panelOpen, setPanelOpen] = useState(false)
 
@@ -26,8 +23,6 @@ export function BrowseFilterPage() {
   const handleOpen = useCallback((media: BrowseMedia) => {
     setOpenMediaId(media.id)
   }, [])
-
-  if (!isAuthenticated) return <Navigate to="/login" replace />
 
   return (
     <div className="min-h-screen flex flex-col">
