@@ -8,6 +8,7 @@ import { Header } from '@/components/Header'
 import { BrowseSearch } from '@/components/BrowseSearch'
 import { InfiniteGrid } from '@/components/InfiniteGrid'
 import { BrowseEditorModal } from '@/components/BrowseEditorModal'
+import { ErrorState } from '@/components/ErrorState'
 
 export function BrowseSectionPage() {
   const params = useParams<{ type?: string; section?: string }>()
@@ -20,7 +21,7 @@ export function BrowseSectionPage() {
     [navigate],
   )
 
-  const { data, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
+  const { data, isLoading, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
     useInfiniteBrowseSection(config, type)
 
   const allMedia = data?.pages.flatMap((p) => p.media) ?? []
@@ -48,7 +49,7 @@ export function BrowseSectionPage() {
         {isLoading ? (
           <SkeletonGrid />
         ) : isError ? (
-          <ErrorState onRetry={() => refetch()} />
+          <ErrorState error={error} message="Couldn't load results." onRetry={() => refetch()} />
         ) : (
           <InfiniteGrid
             media={allMedia}
@@ -81,13 +82,3 @@ function SkeletonGrid() {
   )
 }
 
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="py-24 text-center space-y-3">
-      <p className="text-destructive text-sm font-medium">Couldn't load results.</p>
-      <button onClick={onRetry} className="underline text-sm text-muted-foreground">
-        Try again
-      </button>
-    </div>
-  )
-}

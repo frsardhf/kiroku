@@ -10,6 +10,13 @@ export class AnilistAuthError extends Error {
   }
 }
 
+export class AnilistDownError extends Error {
+  constructor(message = 'AniList API is temporarily unavailable') {
+    super(message)
+    this.name = 'AnilistDownError'
+  }
+}
+
 function makeClient(): GraphQLClient {
   const token = getToken()
   return new GraphQLClient(ENDPOINT, {
@@ -34,6 +41,9 @@ export async function anilistRequest<T = unknown>(
     if (status === 401 || status === 400) {
       clearToken()
       throw new AnilistAuthError()
+    }
+    if (status === 503 || status === 403 || err instanceof TypeError) {
+      throw new AnilistDownError()
     }
     throw err
   }

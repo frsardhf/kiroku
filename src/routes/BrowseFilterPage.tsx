@@ -8,12 +8,13 @@ import { FilterPanel } from '@/components/FilterPanel'
 import { InfiniteGrid } from '@/components/InfiniteGrid'
 import { PresetChipStrip } from '@/components/PresetChipStrip'
 import { BrowseEditorModal } from '@/components/BrowseEditorModal'
+import { ErrorState } from '@/components/ErrorState'
 
 export function BrowseFilterPage() {
   const { type, filters, setFilters, replaceAll, setType, clearAll, activeCount, isEmpty } = useBrowseParams()
   const [panelOpen, setPanelOpen] = useState(false)
 
-  const { data, isLoading, isError, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
+  const { data, isLoading, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } =
     useInfiniteBrowseFilter(type, filters)
 
   const allMedia = data?.pages.flatMap((p) => p.media) ?? []
@@ -47,7 +48,7 @@ export function BrowseFilterPage() {
         {isLoading ? (
           <SkeletonGrid />
         ) : isError ? (
-          <ErrorState onRetry={() => refetch()} />
+          <ErrorState error={error} message="Couldn't load results." onRetry={() => refetch()} />
         ) : allMedia.length === 0 ? (
           <EmptyState onClear={clearAll} hasFilters={!isEmpty} />
         ) : (
@@ -91,16 +92,6 @@ function SkeletonGrid() {
   )
 }
 
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="py-24 text-center space-y-3">
-      <p className="text-destructive text-sm font-medium">Couldn't load results.</p>
-      <button onClick={onRetry} className="underline text-sm text-muted-foreground">
-        Try again
-      </button>
-    </div>
-  )
-}
 
 function EmptyState({ onClear, hasFilters }: { onClear: () => void; hasFilters: boolean }) {
   return (

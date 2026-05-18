@@ -14,6 +14,7 @@ import { SortControl } from '@/components/SortControl'
 import { DateViewToggle } from '@/components/DateViewToggle'
 import { MediaGrid } from '@/components/MediaGrid'
 import { ListEditorModal } from '@/components/ListEditorModal'
+import { ErrorState } from '@/components/ErrorState'
 import { Input } from '@/components/ui/input'
 
 function matchesSearch(entry: MediaListEntry, query: string): boolean {
@@ -42,7 +43,7 @@ export function ListPage() {
     setCompact,
     applyToAllTabs,
   } = useListParams()
-  const { entries: allEntries, byStatus, isLoading, isError, refetch } = useMediaList(type)
+  const { entries: allEntries, byStatus, isLoading, isError, error, refetch } = useMediaList(type)
   const [editingId, setEditingId] = useState<number | null>(null)
   const [search, setSearch] = useState('')
 
@@ -126,7 +127,7 @@ export function ListPage() {
         {isLoading ? (
           <SkeletonGrid />
         ) : isError ? (
-          <ErrorState onRetry={() => refetch()} />
+          <ErrorState error={error} message="Couldn't load your list." onRetry={() => refetch()} />
         ) : (
           <MediaGrid
             entries={entries}
@@ -159,13 +160,3 @@ function SkeletonGrid() {
   )
 }
 
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="py-24 text-center space-y-3">
-      <p className="text-destructive text-sm font-medium">Couldn't load your list.</p>
-      <button onClick={onRetry} className="underline text-sm text-muted-foreground">
-        Try again
-      </button>
-    </div>
-  )
-}

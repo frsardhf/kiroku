@@ -8,6 +8,7 @@ import { BrowseSearch } from '@/components/BrowseSearch'
 import { BrowseSection } from '@/components/BrowseSection'
 import { Top100Grid } from '@/components/Top100Grid'
 import { BrowseEditorModal } from '@/components/BrowseEditorModal'
+import { ErrorState } from '@/components/ErrorState'
 
 interface EditorCtx {
   mediaId: number
@@ -26,7 +27,7 @@ export function BrowsePage() {
     [navigate],
   )
 
-  const { data, isLoading, isError, refetch } = useBrowseData(type)
+  const { data, isLoading, isError, error, refetch } = useBrowseData(type)
   const [editor, setEditor] = useState<EditorCtx | null>(null)
 
   const openInSection = useCallback(
@@ -47,7 +48,7 @@ export function BrowsePage() {
         {isLoading ? (
           <SkeletonSections />
         ) : isError ? (
-          <ErrorState onRetry={() => refetch()} />
+          <ErrorState error={error} message="Couldn't load browse data." onRetry={() => refetch()} />
         ) : data ? (
           <>
             {type === 'ANIME' && (
@@ -125,13 +126,3 @@ function SkeletonSections() {
   )
 }
 
-function ErrorState({ onRetry }: { onRetry: () => void }) {
-  return (
-    <div className="py-24 text-center space-y-3">
-      <p className="text-destructive text-sm font-medium">Couldn't load browse data.</p>
-      <button onClick={onRetry} className="underline text-sm text-muted-foreground">
-        Try again
-      </button>
-    </div>
-  )
-}
